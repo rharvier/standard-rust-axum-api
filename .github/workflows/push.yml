@@ -1,0 +1,32 @@
+name: Deploy Rust Docker to Heroku
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Show Rust version
+        run: rustc --version
+      - name: Login to Heroku Container Registry
+        run: echo ${{ secrets.HEROKU_API_KEY }} | docker login --username=_ --password-stdin registry.heroku.com
+      - name: Build Docker image
+        run: docker build -t registry.heroku.com/standard-rust-axum-api/web .
+      - name: Push Docker image
+        run: docker push registry.heroku.com/standard-rust-axum-api/web
+      - name: Install Heroku CLI
+        run: curl https://cli-assets.heroku.com/install.sh | sh
+      - name: Release app on Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          echo "Authenticating with Heroku..."
+          heroku auth:whoami || heroku auth:token
+          heroku container:release web -a standard-rust-axum-api
+      - name: Deployment complete
+        run: echo "✅ standard-rust-axum-api successfully deployed to Heroku!"
