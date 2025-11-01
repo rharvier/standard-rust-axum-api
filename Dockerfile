@@ -20,4 +20,6 @@ RUN strip /app/standard-rust-axum-api
 RUN useradd -m appuser
 USER appuser
 
+ENV PORT=8080
+EXPOSE 8080
 CMD ["./standard-rust-axum-api"]

@@ -13,15 +13,17 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Login to Heroku Container Registry
+        run: echo $HEROKU_API_KEY | docker login --username=_ --password-stdin registry.heroku.com
       - name: Build Docker image
-        run: docker build -t registry.heroku.com/standard-rust-axum-api/web:latest .
-      - name: Docker image info
-        run: docker images
-      - name: Login to container Registry
-        run: heroku container:login
+        run: docker build -t registry.heroku.com/standard-rust-axum-api/web .
       - name: Push Docker image
         run: docker push registry.heroku.com/standard-rust-axum-api/web
-      - name: Release
-        run: heroku container:release -a standard-rust-axum-api web
+      - name: Install Heroku CLI
+        run: curl https://cli-assets.heroku.com/install.sh | sh
+      - name: Set Heroku stack to container
+        run: heroku stack:set container -a standard-rust-axum-api
+      - name: Release app on Heroku
+        run: heroku container:release web -a standard-rust-axum-api
       - name: Deployment complete
         run: echo "✅ standard-rust-axum-api successfully deployed to Heroku!"
