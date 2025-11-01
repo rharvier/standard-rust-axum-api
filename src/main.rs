@@ -4,9 +4,14 @@ use axum::{
     routing::{get, post},
 };
 use serde::{Deserialize, Serialize};
+use std::env;
 
 #[tokio::main]
 async fn main() {
+    let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
+    let addr = format!("0.0.0.0:{}", port);
+    println!("🚀 Listening on {}", addr);
+
     // initialize tracing
     tracing_subscriber::fmt::init();
 
