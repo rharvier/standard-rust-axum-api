@@ -20,7 +20,7 @@ jobs:
       - name: make dir
         run: mkdir app
       - name: copy
-        run: mv ./target/release/axum-deom ./app/axum
+        run: mv ./target/release/standard-rust-axum-api ./app/axum
 
       - uses: akhileshns/heroku-deploy@v3.12.12
         with:
