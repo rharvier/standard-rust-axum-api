@@ -1,4 +1,4 @@
-name: Deploy Rust Docker to Heroku
+name: Rust
 
 on:
   push:
@@ -6,24 +6,27 @@ on:
       - main
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    env:
-      HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Login to Heroku Container Registry
-        run: echo $HEROKU_API_KEY | docker login --username=_ --password-stdin registry.heroku.com
-      - name: Build Docker image
-        run: docker build -t registry.heroku.com/standard-rust-axum-api/web .
-      - name: Push Docker image
-        run: docker push registry.heroku.com/standard-rust-axum-api/web
+      - uses: actions/checkout@v3
+      - name: Build
+        run: cargo build --release
+
       - name: Install Heroku CLI
-        run: curl https://cli-assets.heroku.com/install.sh | sh
-      - name: Set Heroku stack to container
-        run: heroku stack:set container -a standard-rust-axum-api
-      - name: Release app on Heroku
-        run: heroku container:release web -a standard-rust-axum-api
-      - name: Deployment complete
-        run: echo "✅ standard-rust-axum-api successfully deployed to Heroku!"
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh 
+
+      - name: make dir
+        run: mkdir app
+      - name: copy
+        run: mv ./target/release/axum-deom ./app/axum
+
+      - uses: akhileshns/heroku-deploy@v3.12.12
+        with:
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: "standard-rust-axum-api"
+          heroku_email: "romainharvier@gmail.com"
+          appdir: "./app"
+          procfile: "web: ./axum"
+          buildpack: "https://github.com/ph3nx/heroku-binary-buildpack.git"
