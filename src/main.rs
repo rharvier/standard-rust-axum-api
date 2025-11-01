@@ -4,62 +4,48 @@ use axum::{
     routing::{get, post},
 };
 use serde::{Deserialize, Serialize};
-use std::env;
-use std::net::SocketAddr;
+use std::{env, net::SocketAddr};
 
 #[tokio::main]
 async fn main() {
+    // Récupère le port injecté par Heroku
     let port = env::var("PORT")
         .unwrap_or_else(|_| "8080".to_string())
         .parse::<u16>()
         .expect("PORT must be a number");
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
+
+    tracing_subscriber::fmt::init();
     println!("🚀 Listening on {}", addr);
 
-    // initialize tracing
-    tracing_subscriber::fmt::init();
-
-    // build our application with a route
     let app = Router::new()
-        // `GET /` goes to `root`
         .route("/", get(root))
-        // `POST /users` goes to `create_user`
         .route("/users", post(create_user));
 
-    // run our app with hyper, listening globally on port 3000
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    // ⚠️ la bonne manière avec Axum 0.7+
+    axum::serve(tokio::net::TcpListener::bind(addr).await.unwrap(), app)
+        .await
+        .expect("server crashed");
 }
 
-// basic handler that responds with a static string
 async fn root() -> &'static str {
     "Hello, World!"
 }
 
-async fn create_user(
-    // this argument tells axum to parse the request body
-    // as JSON into a `CreateUser` type
-    Json(payload): Json<CreateUser>,
-) -> (StatusCode, Json<User>) {
-    // insert your application logic here
+async fn create_user(Json(payload): Json<CreateUser>) -> (StatusCode, Json<User>) {
     let user = User {
         id: 1337,
         username: payload.username,
     };
-
-    // this will be converted into a JSON response
-    // with a status code of `201 Created`
     (StatusCode::CREATED, Json(user))
 }
 
-// the input to our `create_user` handler
 #[derive(Deserialize)]
 struct CreateUser {
     username: String,
 }
 
-// the output to our `create_user` handler
 #[derive(Serialize)]
 struct User {
     id: u64,
