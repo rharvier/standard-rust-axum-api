@@ -5,11 +5,16 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use std::env;
+use std::net::SocketAddr;
 
 #[tokio::main]
 async fn main() {
-    let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
-    let addr = format!("0.0.0.0:{}", port);
+    let port = env::var("PORT")
+        .unwrap_or_else(|_| "8080".to_string())
+        .parse::<u16>()
+        .expect("PORT must be a number");
+
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
     println!("🚀 Listening on {}", addr);
 
     // initialize tracing
